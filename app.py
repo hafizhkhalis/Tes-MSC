@@ -2,37 +2,34 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+from aes import aes_256_encrypt, aes_256_decrypt
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# PostgreSQL database connection parameters
 url = os.environ.get("DATABASE_URL")
 
 CREATE_USERS_TABLE = (
-    "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, Nama TEXT, Email TEXT, Password TEXT);"
+    "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, Nama TEXT, Email TEXT, Password CHAR(255));"
 )
-
 GET_ALL = "SELECT * FROM users;"
 GET_BY_ID = "SELECT * FROM users WHERE id = %s;"
 INSERT_USER = "INSERT INTO users (nama, email, Password) VALUES (%s, %s, %s) RETURNING id;"
-UPDATE_USER = "UPDATE users SET Nama = %s WHERE id = %s;"
+UPDATE_USER = "UPDATE users SET nama = %s, email = %s, password = %s WHERE id = %s;"
 DELETE_USER = "DELETE FROM users WHERE id = %s;"
+GET_LOGIN = "SELECT * FROM users WHERE email = %s;"
 
-# Flask application
 app = Flask(__name__)
-
-# Function to create a database connection
 
 
 def create_connection():
     return psycopg2.connect(url)
 
 
-# Flag to track whether the database is initialized
-initialized = False
+key = os.urandom(32)
+AES_KEY = key
 
-# Initialize the "users" table before the first request
+initialized = False
 
 
 @app.before_request
@@ -55,15 +52,14 @@ def create_user():
 
         with create_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(INSERT_USER, (nama, email, password))
+                cursor.execute(INSERT_USER, (nama, email,
+                               aes_256_encrypt(AES_KEY, password.encode('utf-8'))))
                 user_id = cursor.fetchone()[0]
 
-        return {"id": user_id, "message": f"User: {nama} created."}, 201
+        return {"id": user_id, "message": f"Pengguna: {nama} berhasil dibuat."}, 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# Read all users
 
 
 @app.route("/api/users", methods=["GET"])
@@ -79,8 +75,6 @@ def get_all():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Read a user by ID
-
 
 @app.route("/api/users/<int:user_id>", methods=["GET"])
 def get_by_id(user_id):
@@ -93,30 +87,49 @@ def get_by_id(user_id):
         if user:
             return jsonify(user)
         else:
-            return jsonify({"error": "User not found"}), 404
+            return jsonify({"error": "Pengguna tidak ditemukan!"}), 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# Update a user by ID
 
 
 @app.route("/api/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
     try:
         data = request.get_json()
-        new_username = data["username"]
+        new_name = data.get("nama")
+        new_email = data.get("email")
+        new_password = data.get("password")
 
         with create_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(UPDATE_USER, (new_username, user_id))
+                update_query = "UPDATE users SET "
+                update_values = []
 
-        return {"message": f"User with ID {user_id} updated."}
+                if new_name is not None:
+                    update_query += "nama = %s, "
+                    update_values.append(new_name)
+
+                if new_email is not None:
+                    update_query += "email = %s, "
+                    update_values.append(new_email)
+
+                if new_password is not None:
+                    update_query += "password = %s, "
+                    update_values.append(aes_256_encrypt(
+                        AES_KEY, new_password.encode('utf-8')))
+
+                update_query = update_query.rstrip(", ") + " WHERE id = %s;"
+                update_values.append(user_id)
+
+                cursor.execute(update_query, tuple(update_values))
+
+                connection.commit()
+
+        return {"message": f"Pengguna dengan ID {user_id} berhasil di update."}
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# Delete a user by ID
 
 
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
@@ -126,12 +139,11 @@ def delete_user(user_id):
             with connection.cursor() as cursor:
                 cursor.execute(DELETE_USER, (user_id,))
 
-        return {"message": f"User with ID {user_id} deleted."}
+        return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus."}
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# Run the Flask application
 if __name__ == "__main__":
     app.run(debug=True)
