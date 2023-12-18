@@ -37,8 +37,10 @@ Ada beberapa akses yang dapat digunakan pada API:
 5. Delete data user
    Untuk melakukan delete data user dapat menggunakan : http://127.0.0.1:5000/api/users/<"id"> (DELETED)
 
-# BUG yang terdeteksi
-
-Saat ini penyimpanan data menggunakan aes-256 yang masih dipisahkan menggunakan "/" tetapi sejauh ini tipe data yang dicoba belum ditemukan tipe data yang menyimpan "/" secara keseluruhan sehingga saat di decrypt, perintah tidak mengenali encrypt sebagai sebuah byte
-
-sejauh ini untuk fitur yang aes-256 saya sudah mencoba mencari beberapa sumber termasuk menggunakan chat gpt karena keterbatasan ilmu saya dalam bahasa python maupun penggunaan database postgreSQL
+6. Login User
+   Untuk melakukan login dapat menggunakan : http://127.0.0.1:5000/api/login (POST)
+   Json yang perlu diinput adalah:
+   {
+   "email" : "email"
+   "password" : "password"
+   }

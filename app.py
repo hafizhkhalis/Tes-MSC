@@ -2,7 +2,6 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from aes import aes_256_encrypt, aes_256_decrypt
 
 
 load_dotenv()
@@ -14,10 +13,11 @@ CREATE_USERS_TABLE = (
 )
 GET_ALL = "SELECT * FROM users;"
 GET_BY_ID = "SELECT * FROM users WHERE id = %s;"
-INSERT_USER = "INSERT INTO users (nama, email, Password) VALUES (%s, %s, %s) RETURNING id;"
-UPDATE_USER = "UPDATE users SET nama = %s, email = %s, password = %s WHERE id = %s;"
+# GET_BY_ID = "SELECT PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY') FROM users WHERE id = %s;"
+INSERT_USER = "INSERT INTO users (nama, email, Password) VALUES (%s, %s, PGP_SYM_ENCRYPT(%s, 'AES-KEY')) RETURNING id;"
+UPDATE_USER = "UPDATE users SET nama = %s, email = %s, password = PGP_SYM_ENCRYPT(%s, 'AES-KEY') WHERE id = %s;"
 DELETE_USER = "DELETE FROM users WHERE id = %s;"
-GET_LOGIN = "SELECT * FROM users WHERE email = %s;"
+GET_LOGIN = "SELECT email, PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY') FROM users WHERE email = %s;"
 
 app = Flask(__name__)
 
@@ -25,9 +25,6 @@ app = Flask(__name__)
 def create_connection():
     return psycopg2.connect(url)
 
-
-key = os.urandom(32)
-AES_KEY = key
 
 initialized = False
 
@@ -52,8 +49,7 @@ def create_user():
 
         with create_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(INSERT_USER, (nama, email,
-                               aes_256_encrypt(AES_KEY, password.encode('utf-8'))))
+                cursor.execute(INSERT_USER, (nama, email, password))
                 user_id = cursor.fetchone()[0]
 
         return {"id": user_id, "message": f"Pengguna: {nama} berhasil dibuat."}, 201
@@ -115,9 +111,8 @@ def update_user(user_id):
                     update_values.append(new_email)
 
                 if new_password is not None:
-                    update_query += "password = %s, "
-                    update_values.append(aes_256_encrypt(
-                        AES_KEY, new_password.encode('utf-8')))
+                    update_query += "password = PGP_SYM_ENCRYPT(%s, 'AES-KEY'), "
+                    update_values.append(new_password)
 
                 update_query = update_query.rstrip(", ") + " WHERE id = %s;"
                 update_values.append(user_id)
@@ -140,6 +135,30 @@ def delete_user(user_id):
                 cursor.execute(DELETE_USER, (user_id,))
 
         return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus."}
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/login", methods=["POST"])
+def get_login():
+    try:
+        data = request.get_json()
+        email = data["email"]
+        password = data["password"]
+
+        with create_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(GET_LOGIN, (email,))
+                user = cursor.fetchone()
+
+        if user:
+            if user[1] == password:
+                return {"message": "Login Berhasil"}
+            else:
+                return {"error": "Email atau Kata sandi salah"}
+        else:
+            return {"error": "Pengguna tidak ditemukan"}, 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
