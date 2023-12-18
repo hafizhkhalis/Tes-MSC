@@ -13,9 +13,7 @@ CREATE_USERS_TABLE = (
 )
 GET_ALL = "SELECT * FROM users;"
 GET_BY_ID = "SELECT * FROM users WHERE id = %s;"
-# GET_BY_ID = "SELECT PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY') FROM users WHERE id = %s;"
 INSERT_USER = "INSERT INTO users (nama, email, Password) VALUES (%s, %s, PGP_SYM_ENCRYPT(%s, 'AES-KEY')) RETURNING id;"
-UPDATE_USER = "UPDATE users SET nama = %s, email = %s, password = PGP_SYM_ENCRYPT(%s, 'AES-KEY') WHERE id = %s;"
 DELETE_USER = "DELETE FROM users WHERE id = %s;"
 GET_LOGIN = "SELECT email, PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY') FROM users WHERE email = %s;"
 
@@ -66,7 +64,11 @@ def get_all():
                 cursor.execute(GET_ALL)
                 users = cursor.fetchall()
 
-        return jsonify(users)
+        columns = [column[0] for column in cursor.description]
+
+        users_data = [dict(zip(columns, user)) for user in users]
+
+        return jsonify(users_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -81,7 +83,7 @@ def get_by_id(user_id):
                 user = cursor.fetchone()
 
         if user:
-            return jsonify(user)
+            return jsonify({"id": user[0], "nama": user[1], "email": user[2], "password": user[3]})
         else:
             return jsonify({"error": "Pengguna tidak ditemukan!"}), 404
 
