@@ -80,7 +80,7 @@ def create_user():
                     return {"id": user_id, "message": f"Pengguna: {nama} berhasil dibuat."}, 201
 
         else:
-            return {"message:" "Hanya admin yang dapat membuat akun"}
+            return {"message:" "Hanya admin yang dapat membuat akun"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -101,7 +101,7 @@ def get_all():
 
             return jsonify(users_data)
         else:
-            return {"message": "Hanya admin yang dapat mengakses"}
+            return {"message": "Hanya admin yang dapat mengakses"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -122,7 +122,7 @@ def get_by_id(user_id):
                 return jsonify({"error": "Pengguna tidak ditemukan!"}), 404
 
         else:
-            return {"message": "Hanya admin yang dapat mengakses"}
+            return {"message": "Hanya admin yang dapat mengakses"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -167,10 +167,10 @@ def update_user(user_id):
 
                     connection.commit()
 
-            return {"message": f"Pengguna dengan ID {user_id} berhasil di update."}
+            return {"message": f"Pengguna dengan ID {user_id} berhasil di update."}, 200
 
         else:
-            return {"message": "Anda tidak memiliki akses pada aksi ini"}
+            return {"message": "Anda tidak memiliki akses pada aksi ini"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -189,16 +189,16 @@ def delete_user(user_id):
     try:
         if checking_auth():
             if admin_rejected_delete(user_id):
-                return {"message": "Akun dengan role Admin hanya dapat dihapus dengan mengakses database"}
+                return {"message": "Akun dengan role Admin hanya dapat dihapus dengan mengakses database"}, 402
 
             else:
                 with create_connection() as connection:
                     with connection.cursor() as cursor:
                         cursor.execute(DELETE_USER, (user_id,))
-                        return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus."}
+                        return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus."}, 200
 
         else:
-            return {"message": "Anda tidak memiliki akses pada aksi ini"}
+            return {"message": "Anda tidak memiliki akses pada aksi ini"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -220,15 +220,15 @@ def get_login():
                 user = cursor.fetchone()
 
         if session.get('login_status') == True:
-            return {"message": "Anda sudah login, Logout terlebih dahulu"}
+            return {"message": "Anda sudah login, Logout terlebih dahulu"}, 409
         else:
             if user:
                 if user[1] == password:
                     session['login_status'] = True
                     session['email'] = email
-                    return {"message": "Login Berhasil"}
+                    return {"message": "Login Berhasil"}, 200
                 else:
-                    return {"error": "Email atau Kata sandi salah"}
+                    return {"error": "Email atau Kata sandi salah"}, 400
             else:
                 return {"error": "Pengguna tidak ditemukan"}, 404
 
@@ -250,7 +250,7 @@ def check_profile():
                     return {"message": f"Anda login menggunakan akun dengan nama {details[0]} sebagai {isAdmin}"}
 
         else:
-            return {"message": "Anda belum login, login terlebih dahulu"}
+            return {"message": "Anda belum login, login terlebih dahulu"}, 402
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -262,9 +262,9 @@ def logout():
         session.pop('login_status', None)
         session.pop('email', None)
         session.pop('nama', None)
-        return {"message": "Logout berhasil"}
+        return {"message": "Logout berhasil"}, 200
     else:
-        return {"message": "Anda belum login"}
+        return {"message": "Anda belum login"}, 400
 
 
 if __name__ == "__main__":
