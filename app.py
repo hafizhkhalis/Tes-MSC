@@ -16,7 +16,7 @@ GET_ALL = "SELECT * FROM users;"
 GET_BY_ID = "SELECT * FROM users WHERE id = %s;"
 INSERT_USER = "INSERT INTO users (nama, email, Password, isAdmin) VALUES (%s, %s, PGP_SYM_ENCRYPT(%s, 'AES-KEY'), %s) RETURNING id;"
 DELETE_USER = "DELETE FROM users WHERE id = %s;"
-GET_LOGIN = "SELECT email, PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY'), isAdmin nama FROM users WHERE email = %s;"
+GET_LOGIN = "SELECT id, email, PGP_SYM_DECRYPT(CAST(password AS BYTEA), 'AES-KEY'), isAdmin nama FROM users WHERE email = %s;"
 GET_EMAIL = "SELECT email FROM users WHERE email = %s;"
 GET_PROFILE_DETAILS = "SELECT nama, isAdmin FROM users WHERE email = %s"
 
@@ -209,31 +209,34 @@ app.secret_key = os.urandom(32)
 
 @app.route("/api/login", methods=["POST"])
 def get_login():
-    try:
-        data = request.get_json()
-        email = data["email"]
-        password = data["password"]
+    if session.get('login_status') == True:
+        return {"message": "Anda sudah login, Logout terlebih dahulu"}, 409
+    else:
+        try:
+            data = request.get_json()
+            email = data["email"]
+            password = data["password"]
 
-        with create_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(GET_LOGIN, (email,))
-                user = cursor.fetchone()
-
-        if session.get('login_status') == True:
-            return {"message": "Anda sudah login, Logout terlebih dahulu"}, 409
-        else:
-            if user:
-                if user[1] == password:
-                    session['login_status'] = True
-                    session['email'] = email
-                    return {"message": "Login Berhasil"}, 200
+            with create_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(GET_LOGIN, (email,))
+                    user = cursor.fetchone()
+                if user:
+                    if user[2] == password:
+                        with create_connection() as connection:
+                            with connection.cursor() as cursor:
+                                cursor.execute(
+                                    f"INSERT INTO user_login (id_user, status) VALUES (%s, 'login')", (user[0],))
+                        session['login_status'] = True
+                        session['email'] = email
+                        session['id'] = user[0]
+                        return {"message": f"Login Berhasil"}, 200
+                    else:
+                        return {"error": "Email atau Kata sandi salah"}, 400
                 else:
-                    return {"error": "Email atau Kata sandi salah"}, 400
-            else:
-                return {"error": "Pengguna tidak ditemukan"}, 404
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+                    return {"error": "Pengguna tidak ditemukan"}, 404
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/profile", methods=["GET"])
@@ -259,9 +262,14 @@ def check_profile():
 @app.route("/api/logout", methods=["GET"])
 def logout():
     if session.get('login_status') == True:
+        with create_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"update user_login set status = 'logout' where id=%s;", (session.get('id'),))
         session.pop('login_status', None)
         session.pop('email', None)
         session.pop('nama', None)
+        session.pop('id', None)
         return {"message": "Logout berhasil"}, 200
     else:
         return {"message": "Anda belum login"}, 400
