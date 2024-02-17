@@ -3,6 +3,7 @@ import psycopg2
 import secrets
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, session
+import json
 
 
 load_dotenv()
@@ -77,6 +78,8 @@ def create_user():
                     cursor.execute(
                         INSERT_USER, (nama, email, password, isAdmin))
                     user_id = cursor.fetchone()[0]
+                    cursor.execute(
+                        f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Membuat Akun {nama}')", (session.get("id"),))
                     return {"id": user_id, "message": f"Pengguna: {nama} berhasil dibuat."}, 201
 
         else:
@@ -195,6 +198,8 @@ def delete_user(user_id):
                 with create_connection() as connection:
                     with connection.cursor() as cursor:
                         cursor.execute(DELETE_USER, (user_id,))
+                        cursor.execute(
+                            f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Menghapus akun dengan id {user_id}')", (session.get("id"),))
                         return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus."}, 200
 
         else:
@@ -250,6 +255,8 @@ def check_profile():
                     cursor.execute(GET_PROFILE_DETAILS, (email,))
                     details = cursor.fetchone()
                     isAdmin = "Admin" if details[1] else "User"
+                    cursor.execute(
+                        f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Melakukan Check Profile')", (session.get("id"),))
                     return {"message": f"Anda login menggunakan akun dengan nama {details[0]} sebagai {isAdmin}"}
 
         else:
@@ -273,6 +280,36 @@ def logout():
         return {"message": "Logout berhasil"}, 200
     else:
         return {"message": "Anda belum login"}, 400
+
+
+@app.route("/api/log", methods=["GET"])
+def get_log():
+    try:
+        if session.get('login_status') == True:
+
+            with create_connection() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(f"""select u.nama, ug.status_change, ug.time from user_log as ug
+                                            join users as u on ug.id_user = u.id
+                                        where u.id = {session.get("id")}""")
+                    log = cursor.fetchall()
+                    logs = []
+                    for row in log:
+                        log_entry = {
+                            'nama': row[0],
+                            'aktivitas': row[1],
+                            'waktu': row[2]
+                        }
+                        logs.append(log_entry)
+                    cursor.execute(
+                        f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Melakukan Check Profile')", (session.get("id"),))
+                    return jsonify(logs)
+
+        else:
+            return {"message": "Anda belum login, login terlebih dahulu"}, 402
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
