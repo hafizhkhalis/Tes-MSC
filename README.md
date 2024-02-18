@@ -1,8 +1,18 @@
-# Program sederhana microservices python
+## UAS Microservice CRUD API PLSQL UNSIA
 
-Program ini dibuat untuk memenuhi UTS dari mata kuliah PL/SQL
+Mata Kuliah : Pemrograman PL/SQL
 
-Database yang digunakan adalah PostgreSQL
+Kelas : IT302
+
+Prodi : PJJ Informatika
+
+Dosen : Abdul Azzam Ajhari, S.Kom., M.Kom
+
+Anggota :
+
+- Hafizh Khalis Majid
+
+## Microservice CRUD USER API with Python and PostgreSQL
 
 Role yang ada saat ini pada table user:
 
