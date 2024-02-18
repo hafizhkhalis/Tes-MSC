@@ -140,6 +140,7 @@ def update_user(user_id):
             new_email = data.get("email")
             new_password = data.get("password")
             new_role = data.get("isAdmin")
+            message = "Melakukan edit"
 
             with create_connection() as connection:
                 with connection.cursor() as cursor:
@@ -149,24 +150,30 @@ def update_user(user_id):
                     if new_name is not None:
                         update_query += "nama = %s, "
                         update_values.append(new_name)
+                        message += " Nama,"
 
                     if new_email is not None:
                         update_query += "email = %s, "
                         update_values.append(new_email)
+                        message += " Email,"
 
                     if new_password is not None:
                         update_query += "password = PGP_SYM_ENCRYPT(%s, 'AES-KEY'), "
                         update_values.append(new_password)
+                        message += " Password,"
 
                     if new_role is not None:
                         update_query += "isAdmin = %s, "
                         update_values.append(new_role)
+                        message += " Role"
 
                     update_query = update_query.rstrip(
                         ", ") + " WHERE id = %s;"
                     update_values.append(user_id)
 
                     cursor.execute(update_query, tuple(update_values))
+                    cursor.execute(
+                        f"INSERT INTO user_login (id_user, status) VALUES (%s, '{message.replace(',', '')} pada akun dengan id {user_id}')", (session.get("id"),))
 
                     connection.commit()
 
@@ -302,7 +309,7 @@ def get_log():
                         }
                         logs.append(log_entry)
                     cursor.execute(
-                        f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Melakukan Check Profile')", (session.get("id"),))
+                        f"INSERT INTO user_login (id_user, status) VALUES (%s, 'Melakukan Check Log Aktivitas')", (session.get("id"),))
                     return jsonify(logs)
 
         else:
