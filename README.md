@@ -14,6 +14,10 @@ Anggota :
 
 ## Microservice CRUD USER API with Python and PostgreSQL
 
+# Agile Board Current Project
+
+![alt text](images/curr.png)
+
 Role yang ada saat ini pada table user:
 
 - Admin
