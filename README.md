@@ -119,7 +119,7 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 400: Email atau kata sandi salah
    - 500: Eror
 
-   ![alt text](images/login.png.png)
+   ![alt text](images/login.png)
 
 7. Action: Cek Profile\
    Method: GET\
