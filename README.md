@@ -21,24 +21,24 @@ Role yang ada saat ini pada table user:
 
 Ada beberapa akses yang dapat digunakan pada API:
 
-1. - Action: Create Account
-   - Method: POST
-   - API: /api/create_user
-   - Auth: Admin
-   - Body:
-     {
-     “nama”: “nama”,
-     “email”: “email”,
-     “password”: “password”,
-     “isAdmin”: True/False (Jika dikosongkan valuenya false)
-     }
+1. Action: Create Account\
+   Method: POST\
+   API: /api/create_user\
+   Auth: Admin\
+   Body:\
+    {\
+    “nama”: “nama”,\
+    “email”: “email”,\
+    “password”: “password”,\
+    “isAdmin”: True/False (Jika dikosongkan valuenya false)\
+    }\
 
-   - Response:
+   Response:\
 
-   * 201: Pengguna berhasil dibuat
-   * 400: Email pernah dibuat pada akun lain
-   * 402: Hanya admin yang dapat membuat akun
-   * 500: Eror
+   - 201: Pengguna berhasil dibuat
+   - 400: Email pernah dibuat pada akun lain
+   - 402: Hanya admin yang dapat membuat akun
+   - 500: Eror
 
 2. - Action: Get Data All Account
    - Method: GET
