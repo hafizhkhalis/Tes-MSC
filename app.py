@@ -191,7 +191,7 @@ def admin_rejected_delete(id):
         with connection.cursor() as cursor:
             cursor.execute(GET_BY_ID, (id,))
             details = cursor.fetchone()
-            return True if details[3] else False
+            return True if details[3] == True else False
 
 
 @app.route("/api/delete_user/<int:user_id>", methods=["DELETE"])
@@ -199,7 +199,7 @@ def delete_user(user_id):
     try:
         if checking_auth():
             if admin_rejected_delete(user_id):
-                return {"message": "Akun dengan role Admin hanya dapat dihapus dengan mengakses database"}, 402
+                return {"message": f"Akun dengan role Admin hanya dapat dihapus dengan mengakses database {admin_rejected_delete(user_id)} "}, 402
 
             else:
                 with create_connection() as connection:

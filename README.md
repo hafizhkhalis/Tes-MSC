@@ -30,7 +30,7 @@ Ada beberapa akses yang dapat digunakan pada API:
     “nama”: “nama”,\
     “email”: “email”,\
     “password”: “password”,\
-    “isAdmin”: True/False (Jika dikosongkan valuenya false)\
+    “isAdmin”: true/false (Jika dikosongkan valuenya false)\
     }
 
    Response:
@@ -39,6 +39,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 400: Email pernah dibuat pada akun lain
    - 402: Hanya admin yang dapat membuat akun
    - 500: Eror
+
+   ![alt text](images/create_user.png)
 
 2. Action: Get Data All Account\
    Method: GET\
@@ -50,6 +52,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 402: Hanya admin yang dapat mengakses
    - 500: Eror
 
+   ![alt text](images/get_all_users.png)
+
 3. Action: Get Data Users by ID\
    Method: GET\
    API: /api/users/”user_id”\
@@ -60,6 +64,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 402: Hanya admin yang dapat mengakses
    - 500: Eror
 
+   ![alt text](images/get_user.png)
+
 4. Action: Update user
    Method: PUT
    API: /api/edit_user/”user_id”
@@ -69,7 +75,7 @@ Ada beberapa akses yang dapat digunakan pada API:
     "email": "email",\
     "isadmin": true/false,\
     "nama": "nama",\
-    "password": ”password,\
+    "password": ”password",\
     }
    Note: Request bisa di isi dengan beberapa parameter update, tidak perlu semua detail akun perlu di update.
 
@@ -81,6 +87,8 @@ Ada beberapa akses yang dapat digunakan pada API:
 
    Note: pada fitur update tidak diperlukan untuk mengisi keseluruhan value, hanya data yang perlu diupdate saja yang diisi
 
+   ![alt text](images/update.png)
+
 5. Action: Delete User\
    Method: DELETE\
    API: /api/delete_user/”user_id”\
@@ -91,6 +99,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 402: Tidak memiliki akses pada aksi ini, akun admin hanya dapat dihapus
      dengan mengakses database
    - 500: Eror
+
+   ![alt text](images/Delete.png)
 
 6. Action: Login\
    Method: POST\
@@ -109,6 +119,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 400: Email atau kata sandi salah
    - 500: Eror
 
+   ![alt text](images/login.png.png)
+
 7. Action: Cek Profile\
    Method: GET\
    API: /api/profile\
@@ -119,6 +131,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 402: Anda belum login, login terlebih dahulu
    - 500: Eror
 
+   ![alt text](images/profile.png)
+
 8. Action: Logout\
    Method: GET\
    API: api/logout\
@@ -128,6 +142,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 200: Logout berhasil
    - 400: Anda belum login
    - 500: Eror
+
+   ![alt text](images/logout.png)
 
 9. Action: Cek Log Aktivitas akun\
    Method: GET\
@@ -140,6 +156,8 @@ Ada beberapa akses yang dapat digunakan pada API:
    - 500: Eror
 
 Trigger aplikasi untuk melakukan duplikasi data dari dari table user_login ke user_log, dan setiap log nantinya dapat dipanggil dengan menggunakan action log pada api request
+
+![alt text](images/log.png)
 
 # Detail Trigger
 
